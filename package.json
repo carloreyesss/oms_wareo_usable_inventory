@@ -1,0 +1,22 @@
+{
+  "name": "first-task-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.0.3",
+    "json-2-csv": "^3.18.0",
+    "request": "^2.88.2"
+  },
+  "bin": "./index.js",
+  "pkg": {
+    "assets": "./node_modules/figlet/fonts/Standard.flf"
+  }
+}
