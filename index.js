@@ -55,7 +55,6 @@ function getDataAndConvertToCsv(skus){
                 "Location": '',
                 "Qty": val.quantity
             });
-
             console.log(val)
         });
     
