@@ -17,12 +17,11 @@ const converter = require('json-2-csv')
     skus.shift();
 
     let skusChunks = _.chunk(skus, 5000); // Chunk array
-    console.log(skusChunks[0].join())
-    process.exit()
+
     run(0);
 
     async function run(i){
-        if(skusChunks[i]){
+        if(skusChunks[i] && skusChunks.length >= i){
             await getData(skusChunks[i].join(), i);
         }
     }
@@ -64,7 +63,7 @@ const converter = require('json-2-csv')
                 // write CSV to a file
                 let date = new Date().toISOString().slice(0, 10);
                 if(i <= 1){
-                    fs.appendFileSync(date.replace(/-/g,"") + '-' + filePath, csv)
+                    fs.appendFileSync(date.replace(/-/g,"") + '-' + filePath, csv) // swith header
                 } else {
                     fs.appendFileSync(date.replace(/-/g,"") + '-' + filePath, '\n' + csv.split('\n').slice(1).join('\n'))
                 }
