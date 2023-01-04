@@ -15,7 +15,7 @@ const converter = require('json-2-csv')
     skus = skus.replace(/"/g, '');
     skus = skus.split(/\r?\n/);
     skus.shift();
-
+    skus = _.uniq(skus);
     let skusChunks = _.chunk(skus, 5000); // Chunk array
 
     run(0);
@@ -53,9 +53,11 @@ const converter = require('json-2-csv')
                     "Company Name": "",
                     "Product SKU": val.sku,
                     "Location": "",
-                    "Qty": val.quantity
+                    "Qty": val.item_type == 'not_in_fba' ? 'NA': val.quantity
                 });
             })
+
+            console.log('Saving to file...');
 
             converter
             .json2csvAsync(results)
