@@ -53,7 +53,8 @@ const converter = require('json-2-csv')
                     "Company Name": "",
                     "Product SKU": val.sku,
                     "Location": "",
-                    "Qty": val.item_type === 'not_in_fba' ? 'NA' : val.quantity
+                    "Qty": val.item_type === 'not_in_fba' ? 'NA' : val.quantity,
+                    "Description": val.name
                 });
             })
 
@@ -65,7 +66,7 @@ const converter = require('json-2-csv')
                 // write CSV to a file
                 let date = new Date().toISOString().slice(0, 10);
                 if(i <= 1){
-                    fs.appendFileSync(date.replace(/-/g,"") + '-' + filePath, csv) // swith header
+                    fs.writeFileSync(date.replace(/-/g,"") + '-' + filePath, csv) // swith header
                 } else {
                     fs.appendFileSync(date.replace(/-/g,"") + '-' + filePath, '\n' + csv.split('\n').slice(1).join('\n'))
                 }
