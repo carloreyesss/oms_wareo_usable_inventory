@@ -20,13 +20,13 @@ const converter = require('json-2-csv')
 
     run(0);
 
-    async function run(i){
+    function run(i){
         if(skusChunks[i] && skusChunks.length >= i){
-            await getData(skusChunks[i].join(), i);
+            getData(skusChunks[i].join(), i);
         }
     }
 
-    async function getData(skuLists, i){
+    function getData(skuLists, i){
         var data = JSON.stringify({
             "api_key": process.env.API_KEY,
             "email": process.env.EMAIL,
@@ -44,12 +44,12 @@ const converter = require('json-2-csv')
             data : data
         };
         axios(config)
-        .then(async function (response) {
+        .then(function(response) {
             let results = [];
-            response.data.products.forEach( (val) => {
+            response.data.products.forEach(async (val) => {
 
                 console.log(val.sku)
-                 results.push({
+                 await results.push({
                     "Company Name": "",
                     "Product SKU": val.sku,
                     "Location": "",
