@@ -53,8 +53,7 @@ const converter = require('json-2-csv')
                     "Company Name": "",
                     "Product SKU": val.sku,
                     "Location": "",
-                    "Qty": val.item_type === 'not_in_fba' ? 'NA' : val.quantity,
-                    "Description": val.name
+                    "Qty": val.item_type === 'not_in_fba' ? 'NA' : val.quantity
                 });
             })
 
