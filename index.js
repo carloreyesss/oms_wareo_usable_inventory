@@ -1,40 +1,39 @@
-require('dotenv').config();
-
-var _ = require('lodash');
 const fs = require('fs')  
-var axios = require('axios');
-const csv = require('csv-parser');
+
+require('dotenv').config();
+const _ = require('lodash');
+const axios = require('axios');
+const { DateTime } = require("luxon");
 const converter = require('json-2-csv')
 
 ;(async () => {
+    const [, , filePath ] = process.argv;
 
-    // Read list of SKUs params in the CSV file
-    var filePath = process.argv.slice(2)[0];
+    const skus = fs.readFileSync(filePath, 'utf-8')
+        .replace(/"/g, '')
+        .split(/\r?\n/);
 
-    let skus = fs.readFileSync(filePath, 'utf-8');
-    skus = skus.replace(/"/g, '');
-    skus = skus.split(/\r?\n/);
-    skus.shift();
-    skus = _.uniq(skus);
-    let skusChunks = _.chunk(skus, 50); // Chunk array
+    let skusUniq = _.uniq(skus);
+    skusUniq.shift();
+    const skusChunks = _.chunk(skusUniq, 50); // Chunk array
 
     run(0);
 
     function run(i){
-        if(skusChunks[i] && skusChunks.length >= i){
+        if(skusChunks[i] && skusChunks.length > i){
             getData(skusChunks[i].join(), i);
         }
     }
 
     function getData(skuLists, i){
-        var data = JSON.stringify({
+        const data = JSON.stringify({
             "api_key": process.env.API_KEY,
             "email": process.env.EMAIL,
             "signature": process.env.SIGNATURE,
             "product_skus": skuLists
         });
         
-        var config = {
+        const config = {
             method: 'get',
             url: 'https://ewms.anchanto.com/fetch_stock',
             headers: { 
@@ -45,39 +44,70 @@ const converter = require('json-2-csv')
         };
         axios(config)
         .then(function(response) {
-            let results = [];
-            response.data.products.forEach(async (val) => {
+            const results = [];
+            const products = response?.data?.products;
 
-                console.log(val.sku)
-                 await results.push({
-                    "Company Name": "",
-                    "Product SKU": val.sku,
-                    "Location": "",
-                    "Qty": val.item_type === 'not_in_fba' ? 'NA' : val.quantity
+            for(let j = 0; products.length > j; j++){
+                let val = products[j];
+
+                results.push({
+                    company_name: "",
+                    product_sku: val.sku,
+                    location: "",
+                    item_type: val.item_type,
+                    qty: val.item_type === 'not_in_fba' ? 'NA' : val.quantity
                 });
-            })
 
-            console.log('Saving to file...');
+                console.log(`Saving ${val.sku} ...`)
+            }
 
-            converter
-            .json2csvAsync(results)
-            .then(csv => {
-                // write CSV to a file
-                let date = new Date().toISOString().slice(0, 10);
-                if(i <= 1){
-                    fs.writeFileSync(date.replace(/-/g,"") + '-' + filePath, csv) // swith header
-                } else {
-                    fs.appendFileSync(date.replace(/-/g,"") + '-' + filePath, '\n' + csv.split('\n').slice(1).join('\n'))
-                }
-            })
-            .catch(err => console.log(err))
-
-            i++;
-            run(i)
+            groupedAndRemoveDuplicates(results,i);
         })
         .catch(function (error) {
             console.log(error);
         });
-       
+    }
+
+    // Grouped data from SKUs and remove the duplicates. Only get the active SKUs
+    function groupedAndRemoveDuplicates(results, i){
+        const groupedResults = _(results)
+            .groupBy(x => x.product_sku.toUpperCase())
+            .map((value, key) => ({product_sku: key, data: value}))
+            .value();
+
+        let skusDataArr = [];
+        groupedResults.forEach((val) => {
+            val.data.forEach((val2) => {
+                if(val2.item_type != 'not_in_fba'){
+                    skusDataArr.push({
+                        "Company Name": "",
+                        "Product SKU": val2.product_sku,
+                        "Location": "",
+                        "Qty": val2.qty
+                    })
+                }
+            })
+        }) 
+
+        convertToCsv(skusDataArr, i);
+    }
+
+    // Convert JSON to CSV
+    function convertToCsv(skusDataArr, i){
+        converter
+        .json2csvAsync(skusDataArr)
+        .then(csv => {
+            // write CSV to a file
+            const date = DateTime.now().toFormat('yyyyMMdd')
+            if(i <= 1){
+                fs.writeFileSync(`${date}-${filePath}`, csv) // with header
+            } else {
+                fs.appendFileSync(`${date}-${filePath}`, '\n' + csv.split('\n').slice(1).join('\n'))
+            }
+        })
+        .catch(err => console.log(err))
+    
+        i++;
+        run(i)
     }
 })();
