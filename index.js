@@ -78,7 +78,16 @@ const converter = require('json-2-csv')
         let skusDataArr = [];
         groupedResults.forEach((val) => {
             val.data.forEach((val2) => {
-                if(val2.item_type != 'not_in_fba'){
+                if(val.data.length > 1){
+                    if(val2.item_type != 'not_in_fba'){
+                        skusDataArr.push({
+                            "Company Name": "",
+                            "Product SKU": val2.product_sku,
+                            "Location": "",
+                            "Qty": val2.qty
+                        })
+                    }
+                } else {
                     skusDataArr.push({
                         "Company Name": "",
                         "Product SKU": val2.product_sku,
